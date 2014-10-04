@@ -114,7 +114,7 @@ class DMDynamicViewController: UIViewController, UIScrollViewDelegate {
         
         for var i = 0; i < self.viewControllers?.count; i++ {
             let page = self.viewControllers?[i]
-            self.addChildViewController(page)
+            self.addChildViewController(page!)
             let nextFrame:CGRect = CGRectMake(CGFloat(i) * self.view.bounds.size.width, self.view.frame.origin.y, self.view.frame.size.width, self.view.frame.size.height)
             page?.view.frame = nextFrame
             containerScrollView.addSubview(page!.view)
@@ -143,7 +143,6 @@ class DMDynamicViewController: UIViewController, UIScrollViewDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         containerScrollView = UIScrollView(frame: self.view.bounds)
-        containerScrollView.autoresizingMask = UIViewAutoresizing.FlexibleHeight | UIViewAutoresizing.FlexibleWidth
         containerScrollView.pagingEnabled = true
         containerScrollView.alwaysBounceVertical = false
         containerScrollView.showsHorizontalScrollIndicator = false
