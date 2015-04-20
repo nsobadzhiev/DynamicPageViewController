@@ -73,7 +73,7 @@ class DMDynamicViewController: UIViewController, UIScrollViewDelegate {
     var delegate: DMDynamicPageViewControllerDelegate? = nil
                             
     init(viewControllers: Array<UIViewController>) {
-        super.init()
+        super.init(nibName: nil, bundle: nil)
         self.viewControllers = viewControllers
         self.notifyDelegateDidChangeControllers()
     }
