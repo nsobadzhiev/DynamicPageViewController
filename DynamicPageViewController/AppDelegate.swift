@@ -23,13 +23,13 @@
 import UIKit
 
 @UIApplicationMain
-class AppDelegate: UIResponder, UIApplicationDelegate {
+class AppDelegate: UIResponder, UIApplicationDelegate, DMDynamicPageViewControllerDataSource {
                             
     var window: UIWindow?
     var pageController:DMDynamicViewController? = nil
+    var viewControllers:Array<UIViewController>? = nil
 
     func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
-        // Override point for customization after application launch.
         let viewController1 = UIViewController()
         let viewController2 = UIViewController()
         let viewController3 = UIViewController()
@@ -42,17 +42,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         viewController4.view.backgroundColor = UIColor.blackColor()
         viewController5.view.backgroundColor = UIColor.yellowColor()
         
-        let viewControllers = [viewController1, viewController2, viewController3, viewController4, viewController5]
-        pageController = DMDynamicViewController(viewControllers: viewControllers)
+        self.viewControllers = [viewController1, viewController2, viewController3, viewController4, viewController5]
+        //pageController = DMDynamicViewController(viewControllers: viewControllers!)
+        pageController = DMDynamicViewController(dataSource: self)
         window = UIWindow()
         window?.frame = UIScreen.mainScreen().bounds
         pageController?.view.frame = window!.frame;
         window?.addSubview(pageController!.view)
         window?.rootViewController = pageController
         window?.makeKeyAndVisible()
-        
-//        var timerRemove = NSTimer.scheduledTimerWithTimeInterval(5.1, target: self, selector: Selector("removeController"), userInfo: nil, repeats: false)
-//        var timerAdd = NSTimer.scheduledTimerWithTimeInterval(10.1, target: self, selector: Selector("addController"), userInfo: nil, repeats: false)
         return true
     }
     
@@ -64,6 +62,35 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         let newController = UIViewController()
         newController.view.backgroundColor = UIColor.purpleColor()
         self.pageController?.insertPage(newController, atIndex: 0)
+    }
+    
+    func pageViewController(pageController: DMDynamicViewController, viewControllerBeforePage previousPage:UIViewController?) -> UIViewController?{
+        if let previousPage = previousPage {
+            let controllers:NSArray = self.viewControllers!
+            let currentIndex = controllers.indexOfObject(previousPage)
+            if currentIndex <= 0 {
+                return nil
+            }
+            else {
+                return controllers[currentIndex - 1] as? UIViewController
+            }
+        }
+        return nil
+    }
+    
+    func pageViewController(pageController: DMDynamicViewController, viewControllerAfterPage nextPage:UIViewController?) -> UIViewController? {
+        let controllers:NSArray = self.viewControllers!
+        if nextPage == nil {
+            return controllers[0] as? UIViewController
+        }
+        let currentIndex = controllers.indexOfObject(nextPage!)
+        if currentIndex >= controllers.count - 1 {
+            return nil
+        }
+        else {
+            
+            return controllers[currentIndex + 1] as? UIViewController
+        }
     }
 
     func applicationWillResignActive(application: UIApplication) {

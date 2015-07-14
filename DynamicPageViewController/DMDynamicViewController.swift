@@ -22,6 +22,11 @@
 
 import UIKit
 
+protocol DMDynamicPageViewControllerDataSource {
+    func pageViewController(pageController: DMDynamicViewController, viewControllerBeforePage previousPage:UIViewController?) -> UIViewController?
+    func pageViewController(pageController: DMDynamicViewController, viewControllerAfterPage nextPage:UIViewController?) -> UIViewController?
+}
+
 protocol DMDynamicPageViewControllerDelegate {
     func pageViewController(pageController: DMDynamicViewController, didSwitchToViewController viewController: UIViewController)
     func pageViewController(pageController: DMDynamicViewController, didChangeViewControllers viewControllers: Array<UIViewController>)
@@ -71,11 +76,17 @@ class DMDynamicViewController: UIViewController, UIScrollViewDelegate {
         }
     }
     var delegate: DMDynamicPageViewControllerDelegate? = nil
+    var dataSource: DMDynamicPageViewControllerDataSource? = nil
                             
     init(viewControllers: Array<UIViewController>) {
         super.init(nibName: nil, bundle: nil)
         self.viewControllers = viewControllers
         self.notifyDelegateDidChangeControllers()
+    }
+    
+    init(dataSource:DMDynamicPageViewControllerDataSource) {
+        super.init(nibName: nil, bundle: nil)
+        self.dataSource = dataSource
     }
     
     required override init(nibName nibNameOrNil: String!, bundle nibBundleOrNil: NSBundle!) {
@@ -123,6 +134,43 @@ class DMDynamicViewController: UIViewController, UIScrollViewDelegate {
         containerScrollView.contentSize = CGSizeMake(self.view.bounds.size.width * CGFloat(self.viewControllers!.count), 1.0)
     }
     
+    func tryLoadInitialControllersFromDataSource() {
+        self.viewControllers = []
+        let firstController = self.dataSource?.pageViewController(self, viewControllerAfterPage: nil)
+        // try to load the next view controller to allow for smooth scrolling
+        let secondController = self.dataSource?.pageViewController(self, viewControllerAfterPage: firstController)
+        if let firstController = firstController {
+            self.viewControllers?.append(firstController)
+        }
+        if let secondController = secondController {
+            self.viewControllers?.append(secondController)
+        }
+    }
+    
+    func tryPrecacheNextController(newPage:Int) {
+        if self.dataSource == nil {
+            return
+        }
+        
+        var nextController:UIViewController? = nil
+        let controllersCount = self.viewControllers?.count
+        if controllersCount != nil &&
+            newPage == controllersCount! - 1 {
+                // the last page has been reached - precache a new one
+                nextController = self.dataSource?.pageViewController(self, viewControllerAfterPage: self.viewControllers?[newPage])
+                if let nextController = nextController {
+                    self.viewControllers?.append(nextController)
+                }
+        }
+        else if newPage == 0 {
+            nextController = self.dataSource?.pageViewController(self, viewControllerBeforePage: self.viewControllers?[newPage])
+            if let nextController = nextController {
+                self.viewControllers?.insert(nextController, atIndex: 0)
+            }
+        }
+        self.layoutPages()
+    }
+    
     func insertPage(viewController: UIViewController, atIndex index: Int) {
         self.viewControllers?.insert(viewController, atIndex: index)
         self.layoutPages()
@@ -150,6 +198,7 @@ class DMDynamicViewController: UIViewController, UIScrollViewDelegate {
         containerScrollView.backgroundColor = UIColor.grayColor()
         self.pageWidth = self.view.frame.size.width
         self.view.addSubview(containerScrollView)
+        self.tryLoadInitialControllersFromDataSource()
         self.layoutPages()
     }
 
@@ -168,12 +217,13 @@ class DMDynamicViewController: UIViewController, UIScrollViewDelegate {
     
     // MARK: UIScrollViewDelegate
     
-    func scrollViewDidScroll(scrollView: UIScrollView!) {
+    func scrollViewDidScroll(scrollView: UIScrollView) {
         // Update the page when more than 50% of the previous/next page is visible
         let page = floor((containerScrollView.contentOffset.x - pageWidth / 2) / pageWidth) + 1
         if (self.currentPage != Int(page)) {
             // Check the page to avoid "index out of bounds" exception.
             if (page >= 0 && Int(page) < self.viewControllers?.count) {
+                self.tryPrecacheNextController(Int(page))
                 self.notifyDelegateDidSwitchPage()
             }
         }
