@@ -82,7 +82,7 @@ class DMDynamicViewController: UIViewController, UIScrollViewDelegate {
         super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
     }
     
-    required init(coder: NSCoder) {
+    required init?(coder: NSCoder) {
         super.init(coder: coder)
     }
     
@@ -96,7 +96,7 @@ class DMDynamicViewController: UIViewController, UIScrollViewDelegate {
     }
     
     override func viewDidLayoutSubviews() {
-        for var i = 0; i < self.viewControllers?.count; i += 1 {
+        for i in (0..<self.viewControllers!.count) {
             let pageX:CGFloat = CGFloat(i) * self.view.bounds.size.width
             self.viewControllers?[i].view.frame = CGRectMake(pageX, 0.0, self.view.bounds.size.width, self.view.bounds.size.height)
         }
@@ -111,8 +111,8 @@ class DMDynamicViewController: UIViewController, UIScrollViewDelegate {
         for pageView in containerScrollView.subviews {
             pageView.removeFromSuperview()
         }
-        
-        for var i = 0; i < self.viewControllers?.count; i++ {
+      
+        for i in (0..<self.viewControllers!.count) {
             let page = self.viewControllers?[i]
             self.addChildViewController(page!)
             let nextFrame:CGRect = CGRectMake(CGFloat(i) * self.view.bounds.size.width, self.view.frame.origin.y, self.view.frame.size.width, self.view.frame.size.height)
@@ -131,7 +131,7 @@ class DMDynamicViewController: UIViewController, UIScrollViewDelegate {
     }
     
     func removePage(viewController: UIViewController) {
-        for var i = 0; i < self.viewControllers?.count; i += 1 {
+        for i in (0..<self.viewControllers!.count) {
             if (self.viewControllers?[i] == viewController) {
                 self.viewControllers?.removeAtIndex(i)
                 self.layoutPages()
@@ -168,7 +168,7 @@ class DMDynamicViewController: UIViewController, UIScrollViewDelegate {
     
     // MARK: UIScrollViewDelegate
     
-    func scrollViewDidScroll(scrollView: UIScrollView!) {
+    func scrollViewDidScroll(scrollView: UIScrollView) {
         // Update the page when more than 50% of the previous/next page is visible
         let page = floor((containerScrollView.contentOffset.x - pageWidth / 2) / pageWidth) + 1
         if (self.currentPage != Int(page)) {
